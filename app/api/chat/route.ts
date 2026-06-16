@@ -4,33 +4,31 @@ export async function POST(req: NextRequest) {
   try {
     const { message, topic } = await req.json();
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-       "Authorization": "Bearer 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",
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          {
-            role: "system",
-            content: `You are a helpful AI tutor for Internee.pk. Topic: ${topic || "General"}. Give clear simple answers.`
-          },
-          {
-            role: "user",
-            content: message
-          }
-        ],
-        max_tokens: 1024,
-      }),
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `You are a helpful AI tutor for Internee.pk. Topic: ${topic || "General"}. Give clear simple answers.\n\nUser: ${message}`
+                }
+              ]
+            }
+          ]
+        }),
+      }
+    );
 
     const data = await response.json();
-    console.log("Groq Response:", JSON.stringify(data));
-    
-    if (data.choices && data.choices[0]) {
-      const reply = data.choices[0].message.content;
+
+    if (data.candidates && data.candidates[0]) {
+      const reply = data.candidates[0].content.parts[0].text;
       return NextResponse.json({ reply });
     } else {
       return NextResponse.json({ reply: "Error: " + JSON.stringify(data) });
